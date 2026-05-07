@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Náš Úklid</title>
     
-    <!-- Propojení s PWA (aby se aplikace chovala jako mobilní) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#27ae60">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,78 +14,89 @@
             font-family: sans-serif; 
             background-color: #f4f7f6; 
             margin: 0; 
-            padding: 20px; 
+            padding: 20px 20px 80px 20px; /* Spodní místo pro menu */
             color: #333; 
         }
-        h1 { 
-            text-align: center; 
-            color: #2c3e50; 
-            margin-bottom: 30px;
+        h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+        
+        /* Navigace nahoře (Záložky) */
+        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { 
+            padding: 10px 20px; border: none; border-radius: 20px; 
+            background: #e0e6ed; color: #7f8c8d; font-weight: bold; cursor: pointer; 
         }
-        .room-card { 
-            background: white; 
-            border-radius: 12px; 
-            padding: 20px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        .tab-btn.active { background: #27ae60; color: white; }
+
+        /* Karty s místnostmi */
+        .room-card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .room-title { margin-top: 0; color: #2980b9; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .task-item { display: flex; align-items: center; padding: 15px 0; border-bottom: 1px solid #ecf0f1; justify-content: space-between;}
+        .task-item:last-child { border-bottom: none; padding-bottom: 0; }
+        
+        .task-left { display: flex; align-items: center; }
+        input[type="checkbox"] { width: 28px; height: 28px; margin-right: 15px; accent-color: #27ae60; }
+        .task-name { font-size: 18px; font-weight: bold; }
+        .task-freq { font-size: 14px; color: #7f8c8d; margin-top: 4px; display: block;}
+        .completed .task-name { text-decoration: line-through; color: #bdc3c7; }
+
+        /* Formulář v nastavení */
+        .form-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        input[type="text"], select { padding: 12px; border: 1px solid #bdc3c7; border-radius: 8px; font-size: 16px; }
+        .btn-add { background: #2980b9; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-delete { background: #e74c3c; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+        /* Spodní menu */
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: white; border-top: 1px solid #ecf0f1; 
+            display: flex; justify-content: space-around; padding: 10px 0; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000;
         }
-        .room-title { 
-            margin-top: 0; 
-            color: #2980b9; 
-            border-bottom: 2px solid #ecf0f1; 
-            padding-bottom: 10px; 
-        }
-        .task-item { 
-            display: flex; 
-            align-items: center; 
-            padding: 15px 0; 
-            border-bottom: 1px solid #ecf0f1; 
-        }
-        .task-item:last-child { 
-            border-bottom: none; 
-            padding-bottom: 0;
-        }
-        input[type="checkbox"] { 
-            width: 28px; 
-            height: 28px; 
-            margin-right: 15px; 
-            accent-color: #27ae60; 
-        }
-        .task-details { 
-            display: flex; 
-            flex-direction: column; 
-        }
-        .task-name { 
-            font-size: 18px; 
-            font-weight: bold; 
-            transition: color 0.3s;
-        }
-        .task-freq { 
-            font-size: 14px; 
-            color: #7f8c8d; 
-            margin-top: 4px;
-        }
-        .completed .task-name { 
-            text-decoration: line-through; 
-            color: #bdc3c7; 
-        }
+        .nav-btn { background: none; border: none; font-size: 16px; font-weight: bold; color: #7f8c8d; padding: 10px; cursor: pointer;}
+        .nav-btn.active { color: #2980b9; }
     </style>
 </head>
 <body>
 
-    <h1>Domácí Úklid 🧹</h1>
+    <h1 id="main-title">Domácí Úklid 🧹</h1>
     
-    <div id="app">
-        <p style="text-align:center">Načítám úkoly z databáze...</p>
+    <!-- OBRAZOVKA ÚKOLY -->
+    <div id="view-tasks">
+        <div class="tabs">
+            <button id="tab-weekly" class="tab-btn active" onclick="window.switchTab('weekly')">Tento týden</button>
+            <button id="tab-monthly" class="tab-btn" onclick="window.switchTab('monthly')">Tento měsíc</button>
+        </div>
+        <div id="tasks-container"></div>
     </div>
 
-    <!-- Script musíme nastavit jako "module", abychom mohli načíst Firebase z internetu -->
-    <script type="module">
-        // 1. Importujeme Firebase knihovny přímo z internetu
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+    <!-- OBRAZOVKA NASTAVENÍ -->
+    <div id="view-settings" style="display: none;">
+        <div class="room-card">
+            <h2 class="room-title">Novej úkol</h2>
+            <div class="form-group">
+                <input type="text" id="new-room" placeholder="Místnost (např. Kuchyň)">
+                <input type="text" id="new-name" placeholder="Úkol (např. Vytřít)">
+                <select id="new-freq">
+                    <option value="weekly">1x Týdně</option>
+                    <option value="monthly">1x Měsíčně</option>
+                </select>
+            </div>
+            <button class="btn-add" style="width: 100%" onclick="window.addTask()">Přidat úkol</button>
+        </div>
+        <h3 style="color: #7f8c8d; margin-top: 30px;">Správa existujících úkolů</h3>
+        <div id="settings-list"></div>
+    </div>
 
-        // 2. Vaše Firebase konfigurace
+    <!-- SPODNÍ NAVIGACE -->
+    <div class="bottom-nav">
+        <button id="nav-tasks" class="nav-btn active" onclick="window.switchView('tasks')">📋 Úkoly</button>
+        <button id="nav-settings" class="nav-btn" onclick="window.switchView('settings')">⚙️ Nastavení</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, addDoc, deleteDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
         const firebaseConfig = {
             apiKey: "AIzaSyC7xojObRK8hZHeSupmDavDqmj8EcURBdM",
             authDomain: "cleaning-app-5a0de.firebaseapp.com",
@@ -96,91 +106,180 @@
             appId: "1:860870271643:web:5b4b1890795e0558115c3e"
         };
 
-        // 3. Spuštění Firebase a propojení s databází
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const tasksCol = collection(db, 'tasks');
 
         let tasks = [];
+        let currentView = 'tasks'; 
+        let activeTab = 'weekly';
 
-        // 4. Funkce, která naplní prázdnou databázi výchozími úkoly
-        async function seedDatabaseIfEmpty() {
-            const snapshot = await getDocs(tasksCol);
-            if (snapshot.empty) {
-                const initialTasks = [
-                    { id: '1', room: 'Kuchyň', name: 'Vyluxovat', frequency: '1x týdně', done: false },
-                    { id: '2', room: 'Kuchyň', name: 'Uklidit lednici', frequency: '1x měsíčně', done: false },
-                    { id: '3', room: 'Jídelna', name: 'Vyluxovat', frequency: '1x týdně', done: false },
-                    { id: '4', room: 'Jídelna', name: 'Uklidit stůl', frequency: '1x týdně', done: false }
-                ];
-                for (const task of initialTasks) {
-                    await setDoc(doc(db, 'tasks', task.id), task);
-                }
+        // Funkce pro výpočet aktuálního období (např. "2026-W19" nebo "2026-M05")
+        function getCurrentPeriod(freq) {
+            const now = new Date();
+            if (freq === 'weekly') {
+                const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+                const dayNum = d.getUTCDay() || 7;
+                d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+                const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+                return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+            } else if (freq === 'monthly') {
+                return `${now.getFullYear()}-M${(now.getMonth() + 1).toString().padStart(2, '0')}`;
             }
+            return 'unknown';
         }
-        
-        // Zavoláme kontrolu při načtení
-        seedDatabaseIfEmpty();
 
-        // 5. NASLOUCHÁNÍ DATABÁZI V REÁLNÉM ČASE
+        // Poslouchání databáze
         onSnapshot(tasksCol, (snapshot) => {
             tasks = [];
             snapshot.forEach((doc) => {
                 tasks.push({ ...doc.data(), id: doc.id });
             });
-            
-            // Seřadíme úkoly podle ID, aby nám na obrazovce neskákaly
-            tasks.sort((a, b) => a.id.localeCompare(b.id));
-            renderTasks();
+            renderApp();
         });
 
-        // 6. Vykreslení aplikace na displej
+        // Přepínání hlavní obrazovky (Úkoly / Nastavení)
+        window.switchView = function(view) {
+            currentView = view;
+            document.getElementById('view-tasks').style.display = view === 'tasks' ? 'block' : 'none';
+            document.getElementById('view-settings').style.display = view === 'settings' ? 'block' : 'none';
+            document.getElementById('nav-tasks').classList.toggle('active', view === 'tasks');
+            document.getElementById('nav-settings').classList.toggle('active', view === 'settings');
+            document.getElementById('main-title').textContent = view === 'tasks' ? 'Domácí Úklid 🧹' : 'Nastavení ⚙️';
+            renderApp();
+        };
+
+        // Přepínání záložek (Týden / Měsíc)
+        window.switchTab = function(tab) {
+            activeTab = tab;
+            document.getElementById('tab-weekly').classList.toggle('active', tab === 'weekly');
+            document.getElementById('tab-monthly').classList.toggle('active', tab === 'monthly');
+            renderApp();
+        };
+
+        // Vykreslení celé aplikace
+        function renderApp() {
+            if (currentView === 'tasks') {
+                renderTasks();
+            } else {
+                renderSettings();
+            }
+        }
+
+        // Vykreslení úkolů (s logikou období)
         function renderTasks() {
-            const appDiv = document.getElementById('app');
-            appDiv.innerHTML = ''; 
+            const container = document.getElementById('tasks-container');
+            container.innerHTML = ''; 
 
-            if (tasks.length === 0) return;
+            // Zobrazíme jen úkoly pro aktivní záložku (týden/měsíc)
+            const filteredTasks = tasks.filter(t => t.frequency === activeTab);
+            const rooms = [...new Set(filteredTasks.map(t => t.room))];
 
-            const rooms = [...new Set(tasks.map(t => t.room))];
+            if(rooms.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#7f8c8d;">Zatím zde nejsou žádné úkoly. Přidejte je v Nastavení.</p>';
+                return;
+            }
+
+            const currentPeriod = getCurrentPeriod(activeTab);
 
             rooms.forEach(room => {
                 const roomCard = document.createElement('div');
                 roomCard.className = 'room-card';
-                
-                const roomTitle = document.createElement('h2');
-                roomTitle.className = 'room-title';
-                roomTitle.textContent = room;
-                roomCard.appendChild(roomTitle);
+                roomCard.innerHTML = `<h2 class="room-title">${room}</h2>`;
 
-                const roomTasks = tasks.filter(t => t.room === room);
+                const roomTasks = filteredTasks.filter(t => t.room === room);
                 
                 roomTasks.forEach(task => {
+                    // Zjistíme, jestli má úkol zapsaný aktuální časový kód v historii
+                    const completedArray = task.completedPeriods || [];
+                    const isDone = completedArray.includes(currentPeriod);
+
                     const taskDiv = document.createElement('div');
-                    taskDiv.className = `task-item ${task.done ? 'completed' : ''}`;
-                    
+                    taskDiv.className = `task-item ${isDone ? 'completed' : ''}`;
                     taskDiv.innerHTML = `
-                        <input type="checkbox" ${task.done ? 'checked' : ''} onclick="window.toggleTask('${task.id}')">
-                        <div class="task-details">
-                            <span class="task-name">${task.name}</span>
-                            <span class="task-freq">${task.frequency}</span>
+                        <div class="task-left">
+                            <input type="checkbox" ${isDone ? 'checked' : ''} onclick="window.toggleTask('${task.id}', '${task.frequency}')">
+                            <div>
+                                <span class="task-name">${task.name}</span>
+                                <span class="task-freq">${task.frequency === 'weekly' ? '1x Týdně' : '1x Měsíčně'}</span>
+                            </div>
                         </div>
                     `;
                     roomCard.appendChild(taskDiv);
                 });
 
-                appDiv.appendChild(roomCard);
+                container.appendChild(roomCard);
             });
         }
 
-        // 7. Odeslání odškrtnutí do databáze (přidáno pod objekt window, abychom to mohli volat z HTML)
-        window.toggleTask = async function(id) {
+        // Vykreslení seznamu v Nastavení
+        function renderSettings() {
+            const list = document.getElementById('settings-list');
+            list.innerHTML = '';
+            
+            tasks.forEach(task => {
+                const item = document.createElement('div');
+                item.className = 'room-card';
+                item.style.marginBottom = '10px';
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${task.room}</strong>: ${task.name} <br>
+                            <small style="color:#7f8c8d;">${task.frequency === 'weekly' ? 'Týdně' : (task.frequency === 'monthly' ? 'Měsíčně' : 'Starý záznam')}</small>
+                        </div>
+                        <button class="btn-delete" onclick="window.deleteTask('${task.id}')">🗑 Smazat</button>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Odškrtnutí úkolu (zápis aktuálního období)
+        window.toggleTask = async function(id, frequency) {
             const task = tasks.find(t => t.id === id);
-            if (task) {
-                // Najdeme konkrétní úkol v databázi a změníme jeho stav
-                const taskRef = doc(db, 'tasks', id);
-                await updateDoc(taskRef, {
-                    done: !task.done
-                });
+            if (!task) return;
+
+            const period = getCurrentPeriod(frequency);
+            const taskRef = doc(db, 'tasks', id);
+            
+            const completed = task.completedPeriods || [];
+            const isDone = completed.includes(period);
+            
+            // Pokud už je hotovo, odebereme kód. Pokud není, přidáme kód.
+            if (isDone) {
+                await updateDoc(taskRef, { completedPeriods: arrayRemove(period) });
+            } else {
+                await updateDoc(taskRef, { completedPeriods: arrayUnion(period) });
+            }
+        };
+
+        // Přidání nového úkolu přes formulář
+        window.addTask = async function() {
+            const room = document.getElementById('new-room').value.trim();
+            const name = document.getElementById('new-name').value.trim();
+            const freq = document.getElementById('new-freq').value;
+            
+            if (!room || !name) {
+                alert('Vyplňte prosím místnost i název úkolu.');
+                return;
+            }
+            
+            await addDoc(tasksCol, {
+                room: room,
+                name: name,
+                frequency: freq,
+                completedPeriods: [] // Zde se budou hromadit kódy splněných období
+            });
+            
+            document.getElementById('new-room').value = '';
+            document.getElementById('new-name').value = '';
+        };
+
+        // Smazání úkolu
+        window.deleteTask = async function(id) {
+            if(confirm('Opravdu chcete tento úkol trvale smazat?')) {
+                await deleteDoc(doc(db, 'tasks', id));
             }
         };
 
