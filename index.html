@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Náš Úklid</title>
+    <style>
+        /* Zde definujeme vzhled aplikace (CSS) */
+        body { 
+            font-family: sans-serif; 
+            background-color: #f4f7f6; 
+            margin: 0; 
+            padding: 20px; 
+            color: #333; 
+        }
+        h1 { 
+            text-align: center; 
+            color: #2c3e50; 
+            margin-bottom: 30px;
+        }
+        .room-card { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
+        .room-title { 
+            margin-top: 0; 
+            color: #2980b9; 
+            border-bottom: 2px solid #ecf0f1; 
+            padding-bottom: 10px; 
+        }
+        .task-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 15px 0; 
+            border-bottom: 1px solid #ecf0f1; 
+        }
+        .task-item:last-child { 
+            border-bottom: none; 
+            padding-bottom: 0;
+        }
+        input[type="checkbox"] { 
+            width: 28px; 
+            height: 28px; 
+            margin-right: 15px; 
+            accent-color: #27ae60; 
+        }
+        .task-details { 
+            display: flex; 
+            flex-direction: column; 
+        }
+        .task-name { 
+            font-size: 18px; 
+            font-weight: bold; 
+            transition: color 0.3s;
+        }
+        .task-freq { 
+            font-size: 14px; 
+            color: #7f8c8d; 
+            margin-top: 4px;
+        }
+        /* Styl pro odškrtnutý úkol */
+        .completed .task-name { 
+            text-decoration: line-through; 
+            color: #bdc3c7; 
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Domácí Úklid 🧹</h1>
+    
+    <!-- Zde se automaticky vygenerují místnosti a úkoly pomocí JavaScriptu -->
+    <div id="app"></div>
+
+    <script>
+        /* Zde je "mozek" aplikace (JavaScript) */
+        
+        // Naše počáteční data (Tohle později přesuneme do Firebase databáze)
+        let tasks = [
+            { id: 1, room: 'Kuchyň', name: 'Vyluxovat', frequency: '1x týdně', done: false },
+            { id: 2, room: 'Kuchyň', name: 'Uklidit lednici', frequency: '1x měsíčně', done: false },
+            { id: 3, room: 'Jídelna', name: 'Vyluxovat', frequency: '1x týdně', done: false },
+            { id: 4, room: 'Jídelna', name: 'Uklidit stůl', frequency: '1x týdně', done: false }
+        ];
+
+        // Funkce, která vezme data výše a vykreslí je na obrazovku
+        function renderTasks() {
+            const appDiv = document.getElementById('app');
+            appDiv.innerHTML = ''; // Vyčistíme obrazovku před novým vykreslením
+
+            // Získáme seznam unikátních místností (Kuchyň, Jídelna)
+            const rooms = [...new Set(tasks.map(t => t.room))];
+
+            // Projdeme každou místnost a vytvoříme pro ni kartu
+            rooms.forEach(room => {
+                const roomCard = document.createElement('div');
+                roomCard.className = 'room-card';
+                
+                const roomTitle = document.createElement('h2');
+                roomTitle.className = 'room-title';
+                roomTitle.textContent = room;
+                roomCard.appendChild(roomTitle);
+
+                // Najdeme jen ty úkoly, které patří do aktuální místnosti
+                const roomTasks = tasks.filter(t => t.room === room);
+                
+                // Vykreslíme úkoly
+                roomTasks.forEach(task => {
+                    const taskDiv = document.createElement('div');
+                    // Pokud je úkol hotový, přidáme mu třídu 'completed' (proškrtnutí textu)
+                    taskDiv.className = `task-item ${task.done ? 'completed' : ''}`;
+                    
+                    taskDiv.innerHTML = `
+                        <input type="checkbox" ${task.done ? 'checked' : ''} onclick="toggleTask(${task.id})">
+                        <div class="task-details">
+                            <span class="task-name">${task.name}</span>
+                            <span class="task-freq">${task.frequency}</span>
+                        </div>
+                    `;
+                    roomCard.appendChild(taskDiv);
+                });
+
+                appDiv.appendChild(roomCard);
+            });
+        }
+
+        // Funkce, která se spustí, když kliknete na zaškrtávátko
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.done = !task.done; // Změníme stav z false na true (nebo naopak)
+                renderTasks(); // Překreslíme aplikaci, aby se úkol proškrtl
+            }
+        }
+
+        // Spustíme vykreslení hned po načtení stránky
+        renderTasks();
+    </script>
+
+</body>
+</html>
