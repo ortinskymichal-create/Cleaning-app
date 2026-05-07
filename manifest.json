@@ -1,0 +1,15 @@
+{
+  "name": "Domácí Úklid",
+  "short_name": "Úklid",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f7f6",
+  "theme_color": "#27ae60",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/995/995053.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
