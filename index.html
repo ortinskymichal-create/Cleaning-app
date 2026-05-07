@@ -4,11 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Náš Úklid</title>
+    
+    <!-- Propojení s PWA (aby se aplikace chovala jako mobilní) -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#27ae60">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    
     <style>
-        /* Zde definujeme vzhled aplikace (CSS) */
         body { 
             font-family: sans-serif; 
             background-color: #f4f7f6; 
@@ -64,7 +66,6 @@
             color: #7f8c8d; 
             margin-top: 4px;
         }
-        /* Styl pro odškrtnutý úkol */
         .completed .task-name { 
             text-decoration: line-through; 
             color: #bdc3c7; 
@@ -75,29 +76,73 @@
 
     <h1>Domácí Úklid 🧹</h1>
     
-    <!-- Zde se automaticky vygenerují místnosti a úkoly pomocí JavaScriptu -->
-    <div id="app"></div>
+    <div id="app">
+        <p style="text-align:center">Načítám úkoly z databáze...</p>
+    </div>
 
-    <script>
-        /* Zde je "mozek" aplikace (JavaScript) */
+    <!-- Script musíme nastavit jako "module", abychom mohli načíst Firebase z internetu -->
+    <script type="module">
+        // 1. Importujeme Firebase knihovny přímo z internetu
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, updateDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.11.1/firebase-firestore.js";
+
+        // 2. Vaše Firebase konfigurace
+        const firebaseConfig = {
+            apiKey: "AIzaSyC7xojObRK8hZHeSupmDavDqmj8EcURBdM",
+            authDomain: "cleaning-app-5a0de.firebaseapp.com",
+            projectId: "cleaning-app-5a0de",
+            storageBucket: "cleaning-app-5a0de.firebasestorage.app",
+            messagingSenderId: "860870271643",
+            appId: "1:860870271643:web:5b4b1890795e0558115c3e"
+        };
+
+        // 3. Spuštění Firebase a propojení s databází
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const tasksCol = collection(db, 'tasks');
+
+        let tasks = [];
+
+        // 4. Funkce, která naplní prázdnou databázi výchozími úkoly
+        async function seedDatabaseIfEmpty() {
+            const snapshot = await getDocs(tasksCol);
+            if (snapshot.empty) {
+                const initialTasks = [
+                    { id: '1', room: 'Kuchyň', name: 'Vyluxovat', frequency: '1x týdně', done: false },
+                    { id: '2', room: 'Kuchyň', name: 'Uklidit lednici', frequency: '1x měsíčně', done: false },
+                    { id: '3', room: 'Jídelna', name: 'Vyluxovat', frequency: '1x týdně', done: false },
+                    { id: '4', room: 'Jídelna', name: 'Uklidit stůl', frequency: '1x týdně', done: false }
+                ];
+                for (const task of initialTasks) {
+                    await setDoc(doc(db, 'tasks', task.id), task);
+                }
+            }
+        }
         
-        // Naše počáteční data (Tohle později přesuneme do Firebase databáze)
-        let tasks = [
-            { id: 1, room: 'Kuchyň', name: 'Vyluxovat', frequency: '1x týdně', done: false },
-            { id: 2, room: 'Kuchyň', name: 'Uklidit lednici', frequency: '1x měsíčně', done: false },
-            { id: 3, room: 'Jídelna', name: 'Vyluxovat', frequency: '1x týdně', done: false },
-            { id: 4, room: 'Jídelna', name: 'Uklidit stůl', frequency: '1x týdně', done: false }
-        ];
+        // Zavoláme kontrolu při načtení
+        seedDatabaseIfEmpty();
 
-        // Funkce, která vezme data výše a vykreslí je na obrazovku
+        // 5. NASLOUCHÁNÍ DATABÁZI V REÁLNÉM ČASE
+        onSnapshot(tasksCol, (snapshot) => {
+            tasks = [];
+            snapshot.forEach((doc) => {
+                tasks.push({ ...doc.data(), id: doc.id });
+            });
+            
+            // Seřadíme úkoly podle ID, aby nám na obrazovce neskákaly
+            tasks.sort((a, b) => a.id.localeCompare(b.id));
+            renderTasks();
+        });
+
+        // 6. Vykreslení aplikace na displej
         function renderTasks() {
             const appDiv = document.getElementById('app');
-            appDiv.innerHTML = ''; // Vyčistíme obrazovku před novým vykreslením
+            appDiv.innerHTML = ''; 
 
-            // Získáme seznam unikátních místností (Kuchyň, Jídelna)
+            if (tasks.length === 0) return;
+
             const rooms = [...new Set(tasks.map(t => t.room))];
 
-            // Projdeme každou místnost a vytvoříme pro ni kartu
             rooms.forEach(room => {
                 const roomCard = document.createElement('div');
                 roomCard.className = 'room-card';
@@ -107,17 +152,14 @@
                 roomTitle.textContent = room;
                 roomCard.appendChild(roomTitle);
 
-                // Najdeme jen ty úkoly, které patří do aktuální místnosti
                 const roomTasks = tasks.filter(t => t.room === room);
                 
-                // Vykreslíme úkoly
                 roomTasks.forEach(task => {
                     const taskDiv = document.createElement('div');
-                    // Pokud je úkol hotový, přidáme mu třídu 'completed' (proškrtnutí textu)
                     taskDiv.className = `task-item ${task.done ? 'completed' : ''}`;
                     
                     taskDiv.innerHTML = `
-                        <input type="checkbox" ${task.done ? 'checked' : ''} onclick="toggleTask(${task.id})">
+                        <input type="checkbox" ${task.done ? 'checked' : ''} onclick="window.toggleTask('${task.id}')">
                         <div class="task-details">
                             <span class="task-name">${task.name}</span>
                             <span class="task-freq">${task.frequency}</span>
@@ -130,18 +172,18 @@
             });
         }
 
-        // Funkce, která se spustí, když kliknete na zaškrtávátko
-        function toggleTask(id) {
+        // 7. Odeslání odškrtnutí do databáze (přidáno pod objekt window, abychom to mohli volat z HTML)
+        window.toggleTask = async function(id) {
             const task = tasks.find(t => t.id === id);
             if (task) {
-                task.done = !task.done; // Změníme stav z false na true (nebo naopak)
-                renderTasks(); // Překreslíme aplikaci, aby se úkol proškrtl
+                // Najdeme konkrétní úkol v databázi a změníme jeho stav
+                const taskRef = doc(db, 'tasks', id);
+                await updateDoc(taskRef, {
+                    done: !task.done
+                });
             }
-        }
+        };
 
-        // Spustíme vykreslení hned po načtení stránky
-        renderTasks();
     </script>
-
 </body>
 </html>
