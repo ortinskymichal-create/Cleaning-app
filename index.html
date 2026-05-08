@@ -19,35 +19,44 @@
         
         /* Filtry a záložky */
         .controls-container { position: sticky; top: 0; background: #f4f7f6; padding-bottom: 10px; z-index: 100; }
-        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .tabs { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
         .tab-btn { 
             padding: 8px 16px; border: none; border-radius: 20px; 
             background: #e0e6ed; color: #7f8c8d; font-weight: bold; cursor: pointer; font-size: 14px;
         }
         .tab-btn.active { background: #27ae60; color: white; }
 
+        .filters-group { display: flex; gap: 10px; margin-bottom: 5px; }
         .filter-select { 
-            width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #bdc3c7; 
-            background: white; font-size: 15px; margin-bottom: 10px;
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #bdc3c7; 
+            background: white; font-size: 14px; outline: none;
         }
 
         /* Karty */
         .room-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .room-title { margin: 0 0 10px 0; color: #2980b9; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+        .room-title { margin: 0 0 10px 0; color: #2980b9; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; display:flex; justify-content: space-between; align-items: flex-end;}
+        .room-title span.floor-badge { font-size: 12px; background: #ecf0f1; padding: 3px 8px; border-radius: 10px; color: #7f8c8d; font-weight: normal; }
         .task-item { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #ecf0f1; justify-content: space-between;}
-        .task-item:last-child { border-bottom: none; }
+        .task-item:last-child { border-bottom: none; padding-bottom: 0; }
         
         .task-left { display: flex; align-items: center; }
         input[type="checkbox"] { width: 26px; height: 26px; margin-right: 12px; accent-color: #27ae60; }
         .task-name { font-size: 17px; font-weight: bold; }
         .completed .task-name { text-decoration: line-through; color: #bdc3c7; }
 
-        /* Nastavení */
+        /* Nastavení a formuláře */
         .form-section { background: white; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
         input[type="text"], select { padding: 10px; border: 1px solid #bdc3c7; border-radius: 8px; font-size: 15px; }
         .btn-add { background: #2980b9; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-delete { background: #fceaea; color: #e74c3c; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        
+        /* Ikonková tlačítka */
+        .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 5px; border-radius: 5px; }
+        .icon-btn:active { background: #ecf0f1; }
+
+        /* Vyskakovací okno (Dialog) */
+        dialog { border: none; border-radius: 12px; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 85%; max-width: 350px; }
+        dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
 
         /* Spodní menu */
         .bottom-nav { 
@@ -64,25 +73,40 @@
 
     <h1 id="main-title">Domácí Úklid 🧹</h1>
     
+    <!-- OBRAZOVKA ÚKOLY -->
     <div id="view-tasks">
         <div class="controls-container">
             <div class="tabs">
                 <button id="tab-weekly" class="tab-btn active" onclick="window.switchTab('weekly')">Týden</button>
                 <button id="tab-monthly" class="tab-btn" onclick="window.switchTab('monthly')">Měsíc</button>
             </div>
-            <select id="room-filter" class="filter-select" onchange="window.filterByRoom(this.value)">
-                <option value="all">Všechny místnosti</option>
-            </select>
+            
+            <!-- NOVÁ KASKÁDOVÁ FILTRACE -->
+            <div class="filters-group">
+                <select id="floor-filter" class="filter-select" onchange="window.filterByFloor(this.value)">
+                    <option value="all">Všechna patra</option>
+                    <option value="1. patro">1. patro</option>
+                    <option value="2. patro">2. patro</option>
+                </select>
+                <select id="room-filter" class="filter-select" onchange="window.filterByRoom(this.value)">
+                    <option value="all">Všechny místnosti</option>
+                </select>
+            </div>
         </div>
         <div id="tasks-container"></div>
     </div>
 
+    <!-- OBRAZOVKA NASTAVENÍ -->
     <div id="view-settings" style="display: none;">
         <div class="form-section">
             <h2>1. Místnosti</h2>
-            <div class="form-group" style="flex-direction: row;">
-                <input type="text" id="new-room-name" placeholder="Název místnosti" style="flex-grow: 1;">
-                <button class="btn-add" onclick="window.addRoom()">Přidat</button>
+            <div class="form-group" style="flex-direction: row; align-items: center;">
+                <input type="text" id="new-room-name" placeholder="Název místnosti" style="flex-grow: 1; width: 40%;">
+                <select id="new-room-floor" style="width: 35%;">
+                    <option value="1. patro">1. patro</option>
+                    <option value="2. patro">2. patro</option>
+                </select>
+                <button class="btn-add" style="padding: 10px;" onclick="window.addRoom()">Přidat</button>
             </div>
             <div id="rooms-manage-list"></div>
         </div>
@@ -106,6 +130,25 @@
         <div id="settings-tasks-list"></div>
     </div>
 
+    <!-- DIALOG PRO EDITACI MÍSTNOSTI -->
+    <dialog id="edit-room-dialog">
+        <h3 style="margin-top: 0; color: #2c3e50;">Upravit místnost</h3>
+        <div class="form-group">
+            <input type="text" id="edit-room-name" placeholder="Název místnosti">
+            <select id="edit-room-floor">
+                <option value="1. patro">1. patro</option>
+                <option value="2. patro">2. patro</option>
+            </select>
+            <input type="hidden" id="edit-room-id">
+            <input type="hidden" id="edit-room-oldname">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn-add" style="flex: 1;" onclick="window.saveRoomEdit()">Uložit</button>
+            <button class="btn-add" style="flex: 1; background: #ecf0f1; color: #333;" onclick="document.getElementById('edit-room-dialog').close()">Zrušit</button>
+        </div>
+    </dialog>
+
+    <!-- SPODNÍ NAVIGACE -->
     <div class="bottom-nav">
         <button id="nav-tasks" class="nav-btn active" onclick="window.switchView('tasks')">📋 Úkoly</button>
         <button id="nav-settings" class="nav-btn" onclick="window.switchView('settings')">⚙️ Nastavení</button>
@@ -132,6 +175,7 @@
         let tasks = [];
         let rooms = [];
         let activeTab = 'weekly';
+        let activeFloorFilter = 'all';
         let activeRoomFilter = 'all';
 
         // Sledování místností
@@ -175,20 +219,35 @@
             renderApp();
         };
 
+        // Změna filtru na patro (resetuje filtr na místnost a překreslí obojí)
+        window.filterByFloor = (floor) => {
+            activeFloorFilter = floor;
+            activeRoomFilter = 'all'; // Při změně patra automaticky zrušíme výběr konkrétní místnosti
+            updateRoomDropdowns();
+            renderApp();
+        };
+
+        // Změna filtru na místnost
         window.filterByRoom = (roomId) => {
             activeRoomFilter = roomId;
             renderApp();
         };
 
         function updateRoomDropdowns() {
-            const filter = document.getElementById('room-filter');
-            const select = document.getElementById('task-room-select');
-            
-            const optionsHtml = rooms.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
-            filter.innerHTML = '<option value="all">Všechny místnosti</option>' + optionsHtml;
-            select.innerHTML = '<option value="">Vyberte místnost...</option>' + optionsHtml;
-            
-            filter.value = activeRoomFilter;
+            // Filtr na hlavní obrazovce (reaguje na vybrané patro)
+            const taskFilter = document.getElementById('room-filter');
+            let filteredRooms = rooms;
+            if (activeFloorFilter !== 'all') {
+                filteredRooms = rooms.filter(r => (r.floor || '1. patro') === activeFloorFilter);
+            }
+            taskFilter.innerHTML = '<option value="all">Všechny místnosti</option>' + 
+                                   filteredRooms.map(r => `<option value="${r.name}">${r.name}</option>`).join('');
+            taskFilter.value = activeRoomFilter;
+
+            // Roletka pro vytváření úkolu v Nastavení (zobrazuje pořád všechny)
+            const selectSettings = document.getElementById('task-room-select');
+            selectSettings.innerHTML = '<option value="">Vyberte místnost...</option>' + 
+                                       rooms.map(r => `<option value="${r.name}">${r.name} (${r.floor || '1. patro'})</option>`).join('');
         }
 
         function renderApp() {
@@ -196,6 +255,16 @@
             container.innerHTML = '';
 
             let filtered = tasks.filter(t => t.frequency === activeTab);
+
+            // Aplikace filtru patra
+            if (activeFloorFilter !== 'all') {
+                filtered = filtered.filter(t => {
+                    const roomObj = rooms.find(r => r.name === t.room);
+                    return roomObj && (roomObj.floor || '1. patro') === activeFloorFilter;
+                });
+            }
+
+            // Aplikace filtru místnosti
             if (activeRoomFilter !== 'all') {
                 filtered = filtered.filter(t => t.room === activeRoomFilter);
             }
@@ -203,10 +272,17 @@
             const currentPeriod = getCurrentPeriod(activeTab);
             const activeRooms = [...new Set(filtered.map(t => t.room))].sort();
 
+            if(activeRooms.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#7f8c8d; margin-top:30px;">Zde nejsou žádné úkoly k zobrazení.</p>';
+            }
+
             activeRooms.forEach(roomName => {
+                const roomObj = rooms.find(r => r.name === roomName);
+                const floorText = roomObj && roomObj.floor ? `<span class="floor-badge">${roomObj.floor}</span>` : '';
+
                 const card = document.createElement('div');
                 card.className = 'room-card';
-                card.innerHTML = `<h2 class="room-title">${roomName}</h2>`;
+                card.innerHTML = `<h2 class="room-title"><span>${roomName}</span> ${floorText}</h2>`;
                 
                 filtered.filter(t => t.room === roomName).forEach(task => {
                     const isDone = (task.completedPeriods || []).includes(currentPeriod);
@@ -229,35 +305,70 @@
         function renderSettingsLists() {
             const roomList = document.getElementById('rooms-manage-list');
             roomList.innerHTML = rooms.map(r => `
-                <div style="display:flex; justify-content:space-between; padding: 5px 0; border-bottom:1px solid #eee;">
-                    <span>${r.name}</span>
-                    <button class="btn-delete" onclick="window.deleteRoom('${r.id}')">Smazat</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 0; border-bottom:1px solid #eee;">
+                    <span><strong>${r.name}</strong> <small style="color:#7f8c8d;">(${r.floor || '1. patro'})</small></span>
+                    <div>
+                        <button class="icon-btn" onclick="window.openEditRoom('${r.id}', '${r.name}', '${r.floor || '1. patro'}')">✏️</button>
+                        <button class="icon-btn" onclick="window.deleteRoom('${r.id}')">🗑️</button>
+                    </div>
                 </div>
             `).join('');
 
             const taskList = document.getElementById('settings-tasks-list');
             taskList.innerHTML = tasks.sort((a,b) => a.room.localeCompare(b.room)).map(t => `
-                <div class="room-card" style="padding:10px; margin-bottom:5px; font-size:14px;">
+                <div class="room-card" style="padding:10px; margin-bottom:10px; font-size:15px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <span><strong>${t.room}</strong>: ${t.name} (${t.frequency === 'weekly' ? 'Týdně' : 'Měsíčně'})</span>
-                        <button class="btn-delete" onclick="window.deleteTask('${t.id}')">🗑</button>
+                        <span><strong>${t.room}</strong>: ${t.name} <small style="color:#7f8c8d;">(${t.frequency === 'weekly' ? 'Týdně' : 'Měsíčně'})</small></span>
+                        <button class="icon-btn" onclick="window.deleteTask('${t.id}')">🗑️</button>
                     </div>
                 </div>
             `).join('');
         }
 
+        // --- MÍSTNOSTI ---
         window.addRoom = async () => {
             const name = document.getElementById('new-room-name').value.trim();
+            const floor = document.getElementById('new-room-floor').value;
             if (name) {
-                await addDoc(roomsCol, { name });
+                await addDoc(roomsCol, { name, floor });
                 document.getElementById('new-room-name').value = '';
             }
         };
 
-        window.deleteRoom = async (id) => {
-            if(confirm('Smazat místnost?')) await deleteDoc(doc(db, 'rooms', id));
+        window.openEditRoom = (id, name, floor) => {
+            document.getElementById('edit-room-id').value = id;
+            document.getElementById('edit-room-oldname').value = name;
+            document.getElementById('edit-room-name').value = name;
+            document.getElementById('edit-room-floor').value = floor;
+            document.getElementById('edit-room-dialog').showModal();
         };
 
+        window.saveRoomEdit = async () => {
+            const id = document.getElementById('edit-room-id').value;
+            const oldName = document.getElementById('edit-room-oldname').value;
+            const newName = document.getElementById('edit-room-name').value.trim();
+            const newFloor = document.getElementById('edit-room-floor').value;
+
+            if (!newName) { alert('Zadejte název místnosti.'); return; }
+
+            await updateDoc(doc(db, 'rooms', id), { name: newName, floor: newFloor });
+
+            if (newName !== oldName) {
+                const tasksToUpdate = tasks.filter(t => t.room === oldName);
+                for (const t of tasksToUpdate) {
+                    await updateDoc(doc(db, 'tasks', t.id), { room: newName });
+                }
+            }
+            document.getElementById('edit-room-dialog').close();
+        };
+
+        window.deleteRoom = async (id) => {
+            if(confirm('Opravdu smazat místnost? (Úkoly navázané na tuto místnost zůstanou, ale nebudou mít přiřazenou validní místnost)')) {
+                await deleteDoc(doc(db, 'rooms', id));
+            }
+        };
+
+        // --- ÚKOLY ---
         window.addTask = async () => {
             const room = document.getElementById('task-room-select').value;
             const name = document.getElementById('new-task-name').value.trim();
@@ -271,7 +382,7 @@
         };
 
         window.deleteTask = async (id) => {
-            if(confirm('Smazat úkol?')) await deleteDoc(doc(db, 'tasks', id));
+            if(confirm('Opravdu smazat úkol?')) await deleteDoc(doc(db, 'tasks', id));
         };
 
         window.toggleTask = async (id, freq) => {
